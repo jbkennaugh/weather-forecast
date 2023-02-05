@@ -18,7 +18,7 @@ function createHistory() {
     historyDiv.append(historyList);
     for (let i=0; i<searchHistory.length; i++){
         let location = $("<button>").text(searchHistory[i]).attr("data-location", searchHistory[i]);
-        location.addClass("curved-border")
+        location.addClass("history-button curved-border")
         historyList.append(location);
     }
 }
@@ -37,7 +37,7 @@ function getCoordinates(city) {
 //function to use above coords to get the weather forecast
 function getWeather(coords){
     $.ajax({
-        url: `http://api.openweathermap.org/data/2.5/forecast?lat=${coords.lat}&lon=${coords.lon}&appid=${apiKey}&units=metric`,
+        url: `http://api.openweathermap.org/data/2.5/forecast/?lat=${coords.lat}&lon=${coords.lon}&appid=${apiKey}&units=metric`,
         method: "GET"
       })
       .then(function(response) {
@@ -48,47 +48,60 @@ function getWeather(coords){
 //function to construct html using the above weather forecast
 function createWeatherInfo(weather) {
     //section for updating the div where id = "today"
+    $("#today").empty();
+    $("#forecast").empty();
+
     let weatherHeader = $("<h2>").text(`${city} - ${today}`);
+    let weatherIcon = `http://openweathermap.org/img/wn/${weather.list[0].weather[0].icon}@2x.png`;
+    let weatherIconEl = $("<img>").attr("src", weatherIcon).addClass("weather-icon");
     let temp = weather.list[0].main.temp;
-    let tempEl = $("<p>").text(`Temperature - ${temp} °C`)
+    let tempEl = $("<h3>").text(`Temperature - ${temp} °C`);
     let wind = weather.list[0].wind.speed;
-    let windEl = $("<p>").text(`Wind speed - ${wind} km/h`);
+    let windEl = $("<h3>").text(`Wind speed - ${wind} km/h`);
     let humidity = weather.list[0].main.humidity;
-    let humidityEl = $("<p>").text(`Humidity - ${humidity}%`);
+    let humidityEl = $("<h3>").text(`Humidity - ${humidity}%`);
     
-    $("#today").append(weatherHeader, tempEl, windEl, humidityEl);
+    $("#today").append(weatherHeader, weatherIconEl, tempEl, windEl, humidityEl);
     
     //section for updating the div where id = "forecast"
     //iterates through 5 times to get the next 5 days
     let forecastList = $("<ul>").addClass("forecast-list");
     $("#forecast").append(forecastList);
     for (let i = 1; i<=5; i++){
-        //uses find and moment().fromNow() to find the object with the time in i day(s) from now 
-        var dailyForecast = weather.list.find(obj => {
-            console.log(i);
-            if (i===1){    
-                return moment(obj.dt_txt).fromNow() === `in a day`;
-            }
-            else{
-                return moment(obj.dt_txt).fromNow() === `in ${i} days`;
-            }
-        })
         let dailyBlock = $("<li>").addClass("daily-block");
-        weatherHeader = $("<p>").text(`${moment(dailyForecast.dt_txt).format("Do MMMM")}`);
-        temp = dailyForecast.main.temp;
-        tempEl = $("<p>").text(`Temperature - ${temp} °C`)
-        wind = dailyForecast.wind.speed;
-        windEl = $("<p>").text(`Wind speed - ${wind} km/h`);
-        humidity = dailyForecast.main.humidity;
+        //always refers to weather.list[i*8-1] to get the following day's data, to the previous 3 hour interval
+        // i.e. if it is currently 9:01 it'll get 9, and if it is 11:59 it'll also get 9
+        weatherHeader = $("<h3>").text(`${moment(weather.list[i*8-1].dt_txt).calendar()}`);
+        weatherIcon = `http://openweathermap.org/img/wn/${weather.list[i*8-1].weather[0].icon}@2x.png`;
+        weatherIconEl = $("<img>").attr("src", weatherIcon);
+        temp = weather.list[i*8-1].main.temp;
+        tempEl = $("<p>").text(`Temperature - ${temp} °C`);
+        humidity = weather.list[i*8-1].main.humidity;
         humidityEl = $("<p>").text(`Humidity - ${humidity}%`);
 
-        dailyBlock.append(weatherHeader, tempEl, windEl, humidityEl);
+        dailyBlock.append(weatherHeader, weatherIconEl, tempEl, humidityEl);
         forecastList.append(dailyBlock);
-
-        console.log(dailyForecast);
     }
 }
 
+$("#search-button").on("click", function(event){
+    event.preventDefault();
+    if(!$(this).parent().siblings("input").val()){
+        return;
+    }
+    else{ 
+        city = $(this).parent().siblings("input").val();
+        searchHistory.push(city);
+        localStorage.setItem("searchHistory", JSON.stringify(searchHistory))
+        createHistory();
+        getCoordinates(city);
+    }
+})
 
+// ensured event listener is on document for when new buttons are added to history
+$(document).on("click", ".history-button", function(){
+    city = $(this).text();
+    getCoordinates(city);
+})
 
 init();
