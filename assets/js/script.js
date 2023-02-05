@@ -26,7 +26,7 @@ function createHistory() {
 //function to get coords by city
 function getCoordinates(city) {
     $.ajax({
-        url: `http://api.openweathermap.org/geo/1.0/direct?q=${city}&appid=${apiKey}`,
+        url: `https://api.openweathermap.org/geo/1.0/direct?q=${city}&appid=${apiKey}`,
         method: "GET"
     })
     .then(function(response) {
@@ -37,7 +37,7 @@ function getCoordinates(city) {
 //function to use above coords to get the weather forecast
 function getWeather(coords){
     $.ajax({
-        url: `http://api.openweathermap.org/data/2.5/forecast/?lat=${coords.lat}&lon=${coords.lon}&appid=${apiKey}&units=metric`,
+        url: `https://api.openweathermap.org/data/2.5/forecast/?lat=${coords.lat}&lon=${coords.lon}&appid=${apiKey}&units=metric`,
         method: "GET"
       })
       .then(function(response) {
@@ -52,7 +52,7 @@ function createWeatherInfo(weather) {
     $("#forecast").empty();
 
     let weatherHeader = $("<h2>").text(`${city} - ${today}`);
-    let weatherIcon = `http://openweathermap.org/img/wn/${weather.list[0].weather[0].icon}@2x.png`;
+    let weatherIcon = `https://openweathermap.org/img/wn/${weather.list[0].weather[0].icon}@2x.png`;
     let weatherIconEl = $("<img>").attr("src", weatherIcon).addClass("weather-icon");
     let temp = weather.list[0].main.temp;
     let tempEl = $("<h3>").text(`Temperature - ${temp} °C`);
@@ -72,7 +72,7 @@ function createWeatherInfo(weather) {
         //always refers to weather.list[i*8-1] to get the following day's data, to the previous 3 hour interval
         // i.e. if it is currently 9:01 it'll get 9, and if it is 11:59 it'll also get 9
         weatherHeader = $("<h3>").text(`${moment(weather.list[i*8-1].dt_txt).calendar()}`);
-        weatherIcon = `http://openweathermap.org/img/wn/${weather.list[i*8-1].weather[0].icon}@2x.png`;
+        weatherIcon = `https://openweathermap.org/img/wn/${weather.list[i*8-1].weather[0].icon}@2x.png`;
         weatherIconEl = $("<img>").attr("src", weatherIcon);
         temp = weather.list[i*8-1].main.temp;
         tempEl = $("<p>").text(`Temperature - ${temp} °C`);
